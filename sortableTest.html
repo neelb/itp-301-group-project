@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+
+		<!-- Firebase JS -->
+		<script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
+
+		<!-- jQuery -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+
+		<!-- Latest compiled and minified CSS -->
+	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css"/>
+	  <link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+	  <link rel="stylesheet" href="style.css">
+
+		<title>Grocery List</title>
+	</head>
+	
+	<body>
+		<div id="header">
+			Grocery List
+		</div>
+		<div id="addItemGroup">
+			<input type="text" id="new-item-text">
+	  		<button onclick="addItem()">add an item</button>
+	  	</div>
+	 
+	  <!-- Latest Sortable -->
+	  <script src="http://rubaxa.github.io/Sortable/Sortable.js"></script>  
+
+	  <!-- Simple List -->
+	  <div id="list" class="list-group">
+	  </div>
+
+
+	</body>
+
+	<script>
+		var myGroceryList = new Firebase('https://grocerylist1234.firebaseio.com/items');
+		
+		// Simple list
+		Sortable.create(list, { /* options */ });
+
+		function addItem() {
+			var text = document.getElementById("new-item-text").value.trim();
+			document.getElementById('new-item-text').value = "";
+
+			if(text == ""){
+				alert("New item cannot be empty!")
+			}
+			else {
+				var newItemRef = myGroceryList.push();
+				var key = newItemRef.key();
+				console.log(key);
+				newItemRef.set({
+					name: "Neel",
+					title: text,
+					keyID: key
+				});
+			}
+		}
+
+		myGroceryList.on("child_added", function(snapshot) {
+			var data = snapshot.val();
+
+			var newItem = document.createElement("div");
+			newItem.className = 'list-group-item';
+			newItem.innerHTML = data.title;
+			newItem.id = data.keyID;
+
+			var deleteButton = document.createElement("button");
+			deleteButton.class = "deleteButton";
+			deleteButton.innerHTML = "delete item";
+
+			deleteButton.onclick = function() {
+				var userRef = myGroceryList.child(data.keyID);
+				userRef.set(null);
+			}
+
+			newItem.appendChild(deleteButton);
+			document.getElementById('list').appendChild(newItem);
+		});
+
+		myGroceryList.on('child_removed', function(snapshot) {
+		  	var deletedPost = snapshot.val();
+			document.getElementById('list').removeChild(document.getElementById(deletedPost.keyID));
+		});
+	</script>
+
+</html>
