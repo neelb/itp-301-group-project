@@ -30,8 +30,7 @@
 	  <script src="http://rubaxa.github.io/Sortable/Sortable.js"></script>  
 
 	  <!-- Simple List -->
-	  <div id="list" class="list-group">
-	  </div>
+	  <div id="list" class="list-group"></div>
 
 
 	</body>
@@ -40,7 +39,27 @@
 		var myGroceryList = new Firebase('https://grocerylist1234.firebaseio.com/items');
 		
 		// Simple list
-		Sortable.create(list, { /* options */ });
+		Sortable.create(list, {
+			onSort: function (/**Event*/evt) {
+				console.log('here');
+				var listDiv = document.getElementById("list")
+				var newList = [];
+				var listItems = listDiv.childNodes;
+
+				for (var i = 0; i < listItems.length; i++) {
+				  newList.push(listItems[i].firstChild.innerHTML);
+				}
+
+				while (listDiv.hasChildNodes()) {
+					var userRef = myGroceryList.child(listDiv.lastChild.id);
+					userRef.set(null);
+				}
+
+				for(var i=0; i < newList.length; i++) {
+					addItemWithParameter(newList[i]);
+				}
+		    }
+		});
 
 		function addItem() {
 			var text = document.getElementById("new-item-text").value.trim();
@@ -52,7 +71,6 @@
 			else {
 				var newItemRef = myGroceryList.push();
 				var key = newItemRef.key();
-				console.log(key);
 				newItemRef.set({
 					name: "Neel",
 					title: text,
@@ -61,13 +79,25 @@
 			}
 		}
 
+		function addItemWithParameter(item) {
+			var newItemRef = myGroceryList.push();
+				var key = newItemRef.key();
+				newItemRef.set({
+					name: "Neel",
+					title: item,
+					keyID: key
+				});
+		}
+
 		myGroceryList.on("child_added", function(snapshot) {
 			var data = snapshot.val();
 
 			var newItem = document.createElement("div");
 			newItem.className = 'list-group-item';
-			newItem.innerHTML = data.title;
 			newItem.id = data.keyID;
+
+			var newItemText = document.createElement("p");
+			newItemText.innerHTML = data.title;
 
 			var deleteButton = document.createElement("button");
 			deleteButton.class = "deleteButton";
@@ -78,6 +108,7 @@
 				userRef.set(null);
 			}
 
+			newItem.appendChild(newItemText);
 			newItem.appendChild(deleteButton);
 			document.getElementById('list').appendChild(newItem);
 		});
